@@ -1,96 +1,77 @@
-// IN  | Nota musical que deseja a progressão harmonica
-// DO  | Gera uma array de notas musicais harmonicas em relação ao IN
-// OUT | Retorna a array gerada
-function generateProgression(note,modifiers){
-  var biblioteca = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  // find note inside biblioteca
-  var noteIndex = jQuery.inArray(note,biblioteca),
-      bibliotecaLength = biblioteca.length;
-  // selecionar as notas x posições a frente
+angular.module('rameauApp',[])
+  .controller('rameauController',['$scope', function($scope){
+    
+    $scope.rameauNotas = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
-  if( modifiers === undefined || modifiers.length == 0 ){ modifiers = ['majnat'] }
+    $scope.rameauModfiers = {
+      modes:{
+        dorian:{name:'Dorian',description:'Dorian test descriptions'},
+        eolian:{name:'Eolian',description:'Eolian teste description'}},
+      graus:{
+        minor:{name:'Minor',description:'Minor test descriptions'},
+        major:{name:'Major',description:'Major teste description'}},
+      tipos:{
+        natural:{name:'Natural',description:'Natural test descriptions'},
+        harmonic:{name:'Harmonic',description:'Harmonic teste description'},
+        melodic:{name:'Melodic',description:'Melodic teste description'}}
+    };
 
-  switch ( modifiers.join('') ){
-    case 'minnat':
-      // Escala Menor Natural T S T T S T T | binário 2 1 2 2 1 2 2
-      var third = noteIndex + 3,
-          fourth = noteIndex + 5,
-          seventh = noteIndex + 10;
+    $scope.rameauSelectedModfiers = {
+      mode:'dorian',
+      grau:'minor',//major, minor
+      tipo:'natural'//harmonic, natural, melodic
+    };
 
-      if ( third >= bibliotecaLength ){var third = third - bibliotecaLength;}
-      if ( fourth >= bibliotecaLength ){var fourth = fourth - bibliotecaLength;}
-      if ( seventh >= bibliotecaLength ){var seventh = seventh - bibliotecaLength;}
+    $scope.currentDescription = $scope.rameauModfiers.modes.dorian.description;
 
-      //montar a array com as notas selecionadas
-      var notesArray = [note, biblioteca[third], biblioteca[fourth],biblioteca[seventh]];
-    break;
+    $scope.select = function(i) {
+       $scope.selected = i;
+    };
 
-    case 'majnat':
-      // Escala Maior Natural T T S T T T S | binário 2 2 1 2 2 2 1
-      var third = noteIndex + 5,
-          fourth = noteIndex + 7,
-          seventh = noteIndex + 11;
+    $scope.itemClass = function(i) {
+        return i === $scope.selected ? 'active' : undefined;
+    };
 
-      if ( third >= bibliotecaLength ){var third = third - bibliotecaLength;}
-      if ( fourth >= bibliotecaLength ){var fourth = fourth - bibliotecaLength;}
-      if ( seventh >= bibliotecaLength ){var seventh = seventh - bibliotecaLength;}
+    $scope.showDescription = function(e){
+      $scope.currentDescription = e;
+    };
 
-      //montar a array com as notas selecionadas
-      var notesArray = [note, biblioteca[third], biblioteca[fourth],biblioteca[seventh]];
-    break;
-  }
+    var biblioteca = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
-  // retornar array com as notas selecionadas
-  return notesArray;
-}
-// IN  | Array de notas musicais a serem servidas para o usuário
-// DO  | Cria dinâmicamente uma lista de elementos html
-// OUT | Injeta o html na página
-function printResult(notesArray){
-  // pra cada nota dentro de notesArray gerar uma <li> com a note dentro
-  // inserir essa array na página
-  console.log(notesArray);
-}
+    // Aqui há todas as progressões das escalas
+    // O retorno desse função
+    function rameauLogics(){
+      var l = angular.lowercase($scope.rameauSelectedModfiers.mode+$scope.rameauSelectedModfiers.grau+$scope.rameauSelectedModfiers.tipo);
+      switch(l){
+        case 'dorianminornatural':
+          return [3,5,10];
+        break;
 
-function getNoteAndSemitone(){
-  console.log('get note and semitone start');
-  var nota;
-  $('#notas li').each(function(){
-    if( $(this).hasClass('active') ) {
-        console.log('#notas li iteration found active');
-        nota = $(this).attr('data-nota');
-        console.log(nota);
+        case 'dorianmajornatural':
+          return [3,5,10];
+        break;
+
+        default:
+          return 'error';
+        break;
       }
-  });
-  if( typeof(nota) == 'undefined' ){
-    nota = 'C';
-    $('#notas li[data-nota="C"]').addClass('active');
-  }
-  $('#semitons li').each(function(){
-    if( $(this).hasClass('active') ) {
-        nota = nota+$(this).attr('data-modificador');
-        console.log(nota);
-      }
-  });
-  console.log('get note and semiton end');
-}
+    }
 
-jQuery(document).ready(function($) {
-  $('li').click(function(){
-    $(this).addClass('active');
-    console.log($(this));
-    getNoteAndSemitone();
-    // var modifiers = [];
-    // $('#diatonic li').each(function(){
-    //   if( $(this).hasClass('active') ) {
-    //     modifiers.push($(this).attr('data-modificador'));
-    //   }
-    // });
-    // $('#semitons li').each(function(){
-    //   if( $(this).hasClass('active') ) {
-    //     modifiers.push($(this).attr('data-modificador'));
-    //   }
-    // });
-    // printResult(generateProgression($(this).attr('data-nota'),modifiers));
-  });
-});
+    $scope.generateProgression = function(n){
+      $scope.output = [n];
+
+      var noteIndex = jQuery.inArray(n,biblioteca),
+      logic = rameauLogics(),
+      notes = [];
+
+      for (var i = 0; i < logic.length; i++) {
+        if( logic === 'error' ){
+          $scope.output = ['A combinação escolhida, '+$scope.rameauSelectedModfiers.mode+', '+$scope.rameauSelectedModfiers.grau+' e '+$scope.rameauSelectedModfiers.tipo+' não gerou resultado. Use outra combinação.'];
+        } else {
+          notes[i] = noteIndex + logic[i];
+          if(notes[i] >= biblioteca.length){notes[i] = notes[i] - biblioteca.length}
+          $scope.output.push(biblioteca[notes[i]]);
+        }
+      };
+    }
+}]);
